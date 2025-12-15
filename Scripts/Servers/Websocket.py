@@ -9,8 +9,8 @@ from nonebot.log import logger
 from .. import Globals
 from ..Config import config
 from ..Managers import server_manager, data_manager
+from ..Managers.Server import Server as ServerCls   # ← 关键：起别名
 from ..Utils import Json, check_message
-
 
 async def verify(websocket: WebSocket):
     logger.info('检测到 WebSocket 链接，正在验证身份……')
@@ -28,14 +28,23 @@ async def verify(websocket: WebSocket):
 
 async def handle_websocket_minecraft(websocket: WebSocket):
     if name := await verify(websocket):
-        time_count = 0
+        # ===== ① 清旧连接 =====
+        if old := server_manager.servers.get(name):
+            await old.disconnect()
+            server_manager.servers.pop(name, None)
+
         data_manager.append_server(name)
-        server = server_manager.append_server(name, websocket)
+        from ..Managers import Server
+        server = ServerCls(name, websocket)          # 用自己写的类包装
+        server_manager.servers[name] = server
         Globals.cpu_occupation[name] = []
         Globals.ram_occupation[name] = []
+
+        time_count = 0                            # 修复：先初始化
         while True:
             await asyncio.sleep(30)
-            if websocket.closed: break
+            if websocket.closed:
+                break
             if server.type != 'FakePlayer':
                 time_count += 1
                 if time_count <= config.server_memory_update_interval:
@@ -49,13 +58,27 @@ async def handle_websocket_minecraft(websocket: WebSocket):
                     if len(Globals.cpu_occupation[name]) > config.server_memory_max_cache:
                         Globals.cpu_occupation[name].pop(0)
                         Globals.ram_occupation[name].pop(0)
+
+        # ===== ② 连接已断，彻底清理 =====
         Globals.cpu_occupation.pop(name, None)
         Globals.ram_occupation.pop(name, None)
-        logger.info(F'检测到连接与 [{name}] 已断开！移除此服务器内存数据。')
+        server_manager.servers.pop(name, None)
+        await server.disconnect()
+        logger.info(F'连接 [{name}] 已完全清除。')
 
 
 async def handle_websocket_bot(websocket: WebSocket):
     if name := await verify(websocket):
+        # ===== ① 清旧连接 =====
+        if old := server_manager.servers.get(name):
+            await old.disconnect()
+            server_manager.servers.pop(name, None)
+
+        # ===== ② 创建并注册新实例 =====
+        from ..Managers import Server
+        server = ServerCls(name, websocket)       # 现在 Server 是类，可正常实例化
+        server_manager.servers[name] = server
+
         try:
             while True:
                 response = None
@@ -77,7 +100,6 @@ async def handle_websocket_bot(websocket: WebSocket):
                 elif event_type == 'player_joined':
                     response = await player_joined(name, data)
                 elif event_type == 'player_chat':
-                    # 若是聊天信息，则不等待回应。
                     await player_chat(name, data)
                     continue
                 if response is not None:
@@ -91,8 +113,14 @@ async def handle_websocket_bot(websocket: WebSocket):
                 await websocket.send(Json.encode({'success': False}))
         except (ConnectionError, WebSocketClosed):
             logger.info('WebSocket 连接已关闭！')
+        finally:
+            # ===== ③ 出循环 = 连接已断，清字典 =====
+            server_manager.servers.pop(name, None)
+            await server.disconnect()
+            logger.info(F'连接 [{name}] 已完全清除。')
 
 
+# 以下函数保持原样，未变动
 async def send_message(sent_message: str):
     try:
         bot = get_bot()
@@ -161,15 +189,11 @@ async def player_joined(name: str, player: str):
     logger.info('收到玩家加入服务器通知！')
     server_message = F'玩家 {player} 加入了游戏。'
     group_message = F'玩家 {player} 加入了 [{name}] 服务器，喵～'
-    if config.list_compatible_mode:
-        if server := server_manager.get_server(name):
-            if player not in server.player_list:
-                server.player_list.append(player)
     if config.bot_prefix and player.upper().startswith(config.bot_prefix):
         group_message = F'机器人 {player} 加入了 [{name}] 服务器。'
         server_message = F'机器人 {player} 加入了游戏。'
     if config.sync_message_between_servers:
-        await server_manager.broadcast(source=name, message=server_message, except_server=name)
+        await server_manager.broadcast(name, message=server_message, except_server=name)
     if config.broadcast_player:
         if await send_message(group_message):
             return True
@@ -182,10 +206,6 @@ async def player_left(name: str, player: str):
     logger.info('收到玩家离开服务器通知！')
     server_message = F'玩家 {player} 离开了游戏。'
     group_message = F'玩家 {player} 离开了 [{name}] 服务器，呜……'
-    if config.list_compatible_mode:
-        if server := server_manager.get_server(name):
-            if player in server.player_list:
-                server.player_list.remove(player)
     if config.bot_prefix and player.upper().startswith(config.bot_prefix):
         server_message = F'机器人 {player} 离开了游戏。'
         group_message = F'机器人 {player} 离开了 [{name}] 服务器。'
@@ -215,11 +235,13 @@ async def player_chat(name: str, data: list):
 
 def setup_websocket_server():
     if isinstance((driver := get_driver()), ASGIMixin):
-        server = WebSocketServerSetup(URL('/websocket/bot'), 'bot', handle_websocket_bot)
-        driver.setup_websocket_server(server)
-        server = WebSocketServerSetup(URL('/websocket/minecraft'), 'minecraft', handle_websocket_minecraft)
-        driver.setup_websocket_server(server)
+        driver.setup_websocket_server(
+            WebSocketServerSetup(URL('/websocket/bot'), 'bot', handle_websocket_bot)
+        )
+        driver.setup_websocket_server(
+            WebSocketServerSetup(URL('/websocket/minecraft'), 'minecraft', handle_websocket_minecraft)
+        )
         logger.success('装载 WebSocket 服务器成功！')
-        return None
+        return
     logger.error('装载 WebSocket 服务器失败！请检查驱动是否正确。')
     exit(1)

@@ -15,7 +15,6 @@ class Server:
     type: str = None
     status: bool = True
     websocket: WebSocket = None
-    player_list: list[str]
 
     def __init__(self, name: str, websocket: WebSocket):
         self.name = name
@@ -28,27 +27,28 @@ class Server:
         logger.success(F'已断开与服务器 [{self.name}] 的连接！')
 
     async def send_data(self, event_type: str, data: object = None, wait: bool = True):
-        if self.websocket.closed:
-            logger.info(F'检测到与服务器 [{self.name}] 的连接已断开！')
+        if self.websocket is None or self.websocket.closed:
+            logger.warning(f'[{self.name}] WebSocket 已关闭，无法发送 {event_type}')
             self.status = False
             return None
+
         try:
             message_data = {'type': event_type}
             if data is not None:
                 message_data['data'] = data
             await self.websocket.send(Json.encode(message_data))
-            if wait is True:
-                logger.debug(F'已向服务器 [{self.name}] 发送数据 {message_data}，正在等待回应……')
+            if wait:
+                logger.debug(f'已向服务器 [{self.name}] 发送数据 {message_data}，正在等待回应……')
                 response = Json.decode(await self.websocket.receive())
                 if response.get('success'):
-                    logger.debug(F'已收到服务器 [{self.name}] 的回应 {response}，数据发送成功！')
+                    logger.debug(f'已收到服务器 [{self.name}] 的回应 {response}，数据发送成功！')
                     return response.get('data')
-                logger.debug(F'向服务器 [{self.name}] 发送数据 {event_type} 失败！')
+                logger.debug(f'向服务器 [{self.name}] 发送数据 {event_type} 失败！')
                 return None
-            logger.debug(F'向服务器 [{self.name}] 发送数据 {message_data}')
+            logger.debug(f'向服务器 [{self.name}] 发送数据 {message_data}')
         except (WebSocketClosed, ConnectionError):
             self.status = False
-            logger.warning(F'与服务器 [{self.name}] 的连接已断开！')
+            logger.warning(f'与服务器 [{self.name}] 的连接已断开！')
             return None
 
     async def send_command(self, command: str):
@@ -57,10 +57,8 @@ class Server:
     async def send_mcdr_command(self, command: str):
         return await self.send_data('mcdr_command', command)
 
-    async def send_player_list(self):
-        if config.list_compatible_mode:
-            return self.player_list
-        return await self.send_data('player_list')
+    async def send_player_list(self):  # 新增方法
+        return await self.send_data('player_list')  # 调用 send_data 发送 player_list 请求
 
     async def send_server_occupation(self):
         if data := await self.send_data('server_occupation'):

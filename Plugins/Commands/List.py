@@ -69,25 +69,39 @@ def format_players(players: list):
     yield '  没有玩家在线！\n'
 
 
-def classify_players(players: list):
+def classify_players(players: list | None):
+    if players is None:
+        players = []
+
+    # 统一成字符串
+    if isinstance(players, (list, tuple)):
+        players = ','.join(players)      # 列表也先拼成串，方便后面统一处理
+
+    # 按逗号/换行/分号都可以切，去掉空元素
+    import re
+    players = [p.strip() for p in re.split(r'[,\n;]|\r\n', players) if p.strip()]
+
+    # 后面你原来的逻辑
     if not config.bot_prefix:
-        return (players,)
-    fake_players, real_players = [], []
-    for player in players:
-        if player.upper().startswith(config.bot_prefix):
-            fake_players.append(player)
-            continue
-        real_players.append(player)
-    return real_players, fake_players
-
-
+        return players, []
+    real, fake = [], []
+    for p in players:
+        (fake if p.upper().startswith(config.bot_prefix) else real).append(p)
+    return real, fake
 async def get_players(server_flag: str = None):
     if server_flag is None:
-        players = {
-            name: classify_players(await server.send_player_list())
-            for name, server in server_manager.servers.items() if server.status
-        }
+        players = {}
+        for name, server in server_manager.servers.items():
+            if not server.status:
+                continue
+            # ③ 在这里加：拿到 None 就换成空列表
+            raw_list = await server.send_player_list() or []
+            players[name] = classify_players(raw_list)
         return True, players
-    if server := server_manager.get_server(server_flag):
-        return True, {server.name: classify_players(await server.send_player_list())}
-    return False, F'没有找到已连接的 [{server_flag}] 服务器！请检查编号或名称是否输入正确。'
+
+    # 单服务器分支同理
+    server = server_manager.get_server(server_flag)
+    if not server:
+        return False, f'没有找到已连接的 [{server_flag}] 服务器！请检查编号或名称是否输入正确。'
+    raw_list = ((await server.send_player_list()) or {}).get('data') or []   # 同样处理
+    return True, {server.name: classify_players(raw_list)}

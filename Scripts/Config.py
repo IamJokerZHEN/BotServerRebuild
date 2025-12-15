@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 
 class Config(BaseModel):
-    port: int = 8000
+    port: int = 3547
     onebot_access_token: str = ''
 
     token: str = ''
@@ -32,8 +32,6 @@ class Config(BaseModel):
     server_memory_max_cache: int = 200
     server_memory_update_interval: int = 1
 
-    list_compatible_mode: bool = False
-
     whitelist_command: str = 'whitelist'
 
     sync_color_source: str = 'gray'
@@ -44,9 +42,7 @@ class Config(BaseModel):
 
     ai_enabled: bool = False
     ai_api_key: str = None
-    ai_base_url: str = None
-    ai_system_prompt: str = None
-    ai_model_name: str = None
+    ai_role_message: str = None
 
     image_mode: bool = False
     image_background: str = None

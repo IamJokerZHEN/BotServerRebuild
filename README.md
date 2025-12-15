@@ -5,28 +5,54 @@
 **一款基于 Nonebot2 用多种方式与 Minecraft 交互的 Python QQ 机器人**。功能丰富，使用简单，性能高强且可以自行配置，仅需简单配置即可使用。目前已实现的功能有：
 
 # 修改By JokerZHEN
+
 - 多服互联，群服互通。
-    - 在不同服务器之间转发消息。
-    - 可在游戏内看到 QQ 群的消息。
-    - 可使用指令在游戏内向 QQ 群发送消息。
-    - 可播报服务器开启、关闭，玩家进入离开服务器以及死亡消息。
+  
+  - 在不同服务器之间转发消息。
+  - 可在游戏内看到 QQ 群的消息。
+  - 可使用指令在游戏内向 QQ 群发送消息。
+  - 可播报服务器开启、关闭，玩家进入离开服务器以及死亡消息。
+
 - 使用 WebUi 简单配置。
+
 - 戳一戳机器人发送一言卡片。
+
 - 可自行配置指令的开启或关闭。
+
 - 可自行配置接入 AI 功能。
+
 - 对 QQ 群指令相应。目前已实现的指令有：
-    - `luck` 查看今日幸运指数。
-    - `mcdr` 在指定的服务器上执行 MCDR 指令。
-    - `list` 查询每个服务器的玩家在线情况。
-    - `help` 查看帮助信息。
-    - `server` 查看当前在线的服务器并显示对应编号，也可用于查看服务器占用。
-    - `bound` 有关绑定白名单的指令。
-    - `command` 发送指令到服务器。
+  
+  - `luck` 查看今日幸运指数。
+  - `mcdr` 在指定的服务器上执行 MCDR 指令。
+  - `list` 查询每个服务器的玩家在线情况。
+  - `help` 查看帮助信息。
+  - `server` 查看当前在线的服务器并显示对应编号，也可用于查看服务器占用。
+  - `bound` 有关绑定白名单的指令。
+  - `command` 发送指令到服务器。
+
+-新增在游戏内管理员可使用/qqbot命令
+  
+  - `/qqbot reconnect`重连Websocket
+  - `/qqbot config`查看配置文件
+    - `/qqbot config uri "ws://链接"`  更改配置文件uri链接
+      `/qqbot config token "TOKEN"`  更改配置文件Token
+      `/qqbot config reconnect_interval "次数"` 更改配置文件的重连次数
+      `/qqbot config name "服务器名字"` 更改配置文件的服务器名字
+  - `/qqbot test`测试链接
+  - `/qqbot info`查看QQBOT状态
+    -`/qqbot`查看QQBOT状态
+    
+    
 
 更多功能还在探索中……
 
 > [!WARNING]
 > 本项目采用 GPL3 许可证，请勿商用！如若修改请务必开源并且注明出处。
+## 为什么有这分支?
+原作者太懒了 
+QQBOT Fabric Mod 一直不更新
+所以我来更新QQBOT Fabric Mod
 
 ## Docker 部署
 
@@ -65,7 +91,7 @@ docker run -d \
 
 本机器人可通过各种方式与 Minecraft 服务器进行交互，包括：
 
-- [Fabric](https://www.github.com/IamJokerZHEN/Mode.Fabric) 模组
+- [Fabric](https://www.github.com/IamJokerZHEN/Mode.Fabric) 模组(修改 By JokerZHEN)
 - [Spigot](https://www.github.com/Minecraft-QQBot/Plugin.Spigot) 插件
 - [McdReforged](https://www.github.com/Minecraft-QQBot/Plugin.McdReforged) 插件
 - [FakePlayer](https://www.github.com/Minecraft-QQBot/Platform.FakePlayer) 工具
