@@ -65,7 +65,7 @@ QQBOT Fabric Mod 一直不更新
 3. 运行以下命令启动服务：
 
 ```bash
-git clone https://github.com/IamJokerZHEN/BotServer
+git clone https://github.com/IamJokerZHEN/BotServerRebuild
 cd BotServer
 docker-compose up -d
 ```
@@ -91,7 +91,7 @@ docker run -d \
 
 本机器人可通过各种方式与 Minecraft 服务器进行交互，包括：
 
-- [Fabric](https://www.github.com/IamJokerZHEN/Mode.Fabric) 模组(修改 By JokerZHEN)
+- [Fabric](https://github.com/IamJokerZHEN/QQBot_Fabric) 模组(修改 By JokerZHEN)
 - [Spigot](https://www.github.com/Minecraft-QQBot/Plugin.Spigot) 插件
 - [McdReforged](https://www.github.com/Minecraft-QQBot/Plugin.McdReforged) 插件
 - [FakePlayer](https://www.github.com/Minecraft-QQBot/Platform.FakePlayer) 工具

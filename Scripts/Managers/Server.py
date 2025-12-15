@@ -61,11 +61,36 @@ class Server:
         return await self.send_data('player_list')  # 调用 send_data 发送 player_list 请求
 
     async def send_server_occupation(self):
-        if data := await self.send_data('server_occupation'):
-            return tuple(round(percent, 2) for percent in data)
+        data = await self.send_data('server_occupation')
+        if isinstance(data, str):  # 如果 data 是字符串，尝试解析为数字
+            data = json.loads(data)  # 假设服务器返回的是 JSON 字符串
+        if data:
+            return tuple(round(float(percent), 2) for percent in data)  # 假设服务器返回的是包含百分比的列表
+        return None
 
-    async def send_message(self, message_data: list):
-        await self.send_data('message', message_data, wait=False)
+    async def send_data(self, event_type: str, data: object = None, wait: bool = True):
+        if self.websocket is None or self.websocket.closed:
+            logger.warning(f'[{self.name}] WebSocket 已关闭，无法发送 {event_type}')
+            self.status = False
+            return None
+        try:
+            message_data = {'type': event_type}
+            if data is not None:
+                message_data['data'] = data
+            await self.websocket.send(Json.encode(message_data))
+            if wait:
+                logger.debug(f'已向服务器 [{self.name}] 发送数据 {message_data}，正在等待回应……')
+                response = Json.decode(await self.websocket.receive())
+                if response.get('success'):
+                    logger.debug(f'已收到服务器 [{self.name}] 的回应 {response}，数据发送成功！')
+                    return response.get('data')
+                logger.debug(f'向服务器 [{self.name}] 发送数据 {event_type} 失败！')
+                return None
+            logger.debug(f'向服务器 [{self.name}] 发送数据 {message_data}')
+        except (WebSocketClosed, ConnectionError):
+            self.status = False
+            logger.warning(f'与服务器 [{self.name}] 的连接已断开！')
+            return None
 
 
 class ServerManager:
