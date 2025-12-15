@@ -4,6 +4,7 @@
 
 **一款基于 Nonebot2 用多种方式与 Minecraft 交互的 Python QQ 机器人**。功能丰富，使用简单，性能高强且可以自行配置，仅需简单配置即可使用。目前已实现的功能有：
 
+# 修改By JokerZHEN
 - 多服互联，群服互通。
     - 在不同服务器之间转发消息。
     - 可在游戏内看到 QQ 群的消息。
@@ -38,7 +39,7 @@
 3. 运行以下命令启动服务：
 
 ```bash
-git clone https://github.com/Minecraft-QQBot/BotServer
+git clone https://github.com/IamJokerZHEN/BotServer
 cd BotServer
 docker-compose up -d
 ```
@@ -64,7 +65,7 @@ docker run -d \
 
 本机器人可通过各种方式与 Minecraft 服务器进行交互，包括：
 
-- [Fabric](https://www.github.com/Minecraft-QQBot/Mode.Fabric) 模组（开发中）
+- [Fabric](https://www.github.com/IamJokerZHEN/Mode.Fabric) 模组
 - [Spigot](https://www.github.com/Minecraft-QQBot/Plugin.Spigot) 插件
 - [McdReforged](https://www.github.com/Minecraft-QQBot/Plugin.McdReforged) 插件
 - [FakePlayer](https://www.github.com/Minecraft-QQBot/Platform.FakePlayer) 工具
@@ -94,6 +95,7 @@ docker run -d \
 
 ## 友链
 
-- TQM 服务器
+- [Joker Minecraft Server](http://gtnetwork.top/WEBSIZE/Joker_Minecraft_Server/)
 - [LemonFate 服务器](https://www.lemonfate.cn/)
 - [RedstoneDaily 红石日报](https://www.redstonedaily.com/)
+- [GT Network](http://gtnetwork.top)
